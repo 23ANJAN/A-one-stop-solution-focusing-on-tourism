@@ -1,0 +1,26 @@
+<script>
+async function loadTrains() {
+    const response = await fetch("http://localhost:3000/trains");
+    const trains = await response.json();
+    console.log(trains);
+
+    let output = "";
+    trains.forEach(t => {
+        output += `
+            <div>
+                <h3>${t.name}</h3>
+                <p>${t.from} → ${t.to}</p>
+                <p>Dep: ${t.departure} | Arr: ${t.arrival}</p>
+                <p>Runs On: ${t.runs_on.join(", ")}</p>
+                <p>Classes: ${Object.keys(t.price).map(c => c + " ₹" + t.price[c]).join(", ")}</p>
+            </div>
+            <hr>
+        `;
+    });
+
+    document.getElementById("trains").innerHTML = output;
+}
+loadTrains();
+</script>
+
+<div id="trains"></div>
