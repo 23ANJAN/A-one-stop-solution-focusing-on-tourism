@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Payment - Travel App</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-container">
+    <header class="header">
+      <a href="bus.html" class="back-button">←</a>
+      <h1>Payment</h1>
+    </header>
+
+    <div class="payment-container" id="paymentContainer">
+      <!-- Booking summary will load here -->
+    </div>
+  </div>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const routeId = urlParams.get("route_id");
+
+    async function loadRoute() {
+      const container = document.getElementById("paymentContainer");
+
+      if (!routeId) {
+        container.innerHTML = `<p style="padding:2rem;text-align:center;">Invalid route selected. <a href="bus.html">← Back</a></p>`;
+        return;
+      }
+
+      try {
+        const res = await fetch(`/route/${routeId}`);
+        if (!res.ok) throw new Error("Route not found");
+        const route = await res.json();
+
+        container.innerHTML = `
+          <div class="booking-summary">
+            <h2 class="section-title">Booking Summary</h2>
+            <div class="summary-row"><span>Route</span><span>${route.name}</span></div>
+            <div class="summary-row"><span>Date</span><span>${new Date().toLocaleDateString()}</span></div>
+            <div class="summary-row"><span>Passengers</span><span>1</span></div>
+            <div class="summary-row total-row"><span>Total Amount</span><span>$${route.price.toFixed(2)}</span></div>
+          </div>
+
+          <form method="POST" action="/process-payment" id="paymentForm">
+            <input type="hidden" name="route_id" value="${routeId}">
+
+            <h2 class="section-title">Personal Information</h2>
+            <div class="form-group"><label>Full Name</label><input type="text" name="name" class="input-field" required></div>
+            <div class="form-group"><label>Email</label><input type="email" name="email" class="input-field" required></div>
+            <div class="form-group"><label>Phone</label><input type="tel" name="phone" class="input-field" required></div>
+
+            <h2 class="section-title">Payment Method</h2>
+            <div class="payment-methods">
+              <div class="payment-method active" onclick="selectPaymentMethod(this)">💳 Card</div>
+              <div class="payment-method" onclick="selectPaymentMethod(this)">📱 UPI</div>
+              <div class="payment-method" onclick="selectPaymentMethod(this)">🏦 Net Banking</div>
+            </div>
+
+            <div id="cardDetails">
+              <div class="form-group"><label>Card Number</label><input type="text" name="card_number" id="card_number" class="input-field" placeholder="1234 5678 9012 3456"></div>
+              <div class="card-row">
+                <div class="form-group"><label>Name on Card</label><input type="text" name="card_name" class="input-field"></div>
+                <div class="form-group"><label>Expiry</label><input type="text" name="expiry" id="expiry" class="input-field" placeholder="MM/YY"></div>
+                <div class="form-group"><label>CVV</label><input type="password" name="cvv" id="cvv" class="input-field" maxlength="3"></div>
+              </div>
+            </div>
+
+            <button type="submit" class="submit-btn">Pay $${route.price.toFixed(2)}</button>
+            <div class="secure-badge">🔒 Secure Payment</div>
+          </form>
+        `;
+
+        // Card formatting
+        document.getElementById("card_number").addEventListener("input", e => {
+          let value = e.target.value.replace(/\s/g, "").slice(0, 16);
+          e.target.value = value.replace(/(\d{4})/g, "$1 ").trim();
+        });
+        document.getElementById("expiry").addEventListener("input", e => {
+          let v = e.target.value.replace(/\D/g, "").slice(0, 4);
+          if (v.length >= 3) v = v.slice(0,2) + "/" + v.slice(2);
+          e.target.value = v;
+        });
+
+      } catch (err) {
+        container.innerHTML = `<p>Error: ${err.message}</p>`;
+      }
+    }
+
+    function selectPaymentMethod(el) {
+      document.querySelectorAll(".payment-method").forEach(e => e.classList.remove("active"));
+      el.classList.add("active");
+      document.getElementById("cardDetails").style.display = el.innerText.includes("Card") ? "block" : "none";
+    }
+
+    loadRoute();
+  </script>
+</body>
+</html>
