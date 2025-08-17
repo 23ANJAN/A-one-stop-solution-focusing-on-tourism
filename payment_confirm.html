@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Booking Confirmation</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-container">
+    <header class="header">
+      <h1>Booking Confirmation</h1>
+    </header>
+    <div class="payment-container" id="confirmationContainer"></div>
+  </div>
+
+  <script>
+    async function loadConfirmation() {
+      const container = document.getElementById("confirmationContainer");
+      try {
+        const res = await fetch("/confirmation");
+        if (!res.ok) throw new Error("No booking found");
+        const booking = await res.json();
+
+        container.innerHTML = `
+          <div class="booking-summary">
+            <h2 class="section-title">Your Booking</h2>
+            <div class="summary-row"><span>Booking ID</span><span>${booking.booking_id}</span></div>
+            <div class="summary-row"><span>Route</span><span>${booking.route}</span></div>
+            <div class="summary-row"><span>Name</span><span>${booking.name}</span></div>
+            <div class="summary-row"><span>Email</span><span>${booking.email}</span></div>
+            <div class="summary-row total-row"><span>Total Paid</span><span>$${booking.price.toFixed(2)}</span></div>
+          </div>
+        `;
+      } catch (err) {
+        container.innerHTML = `<p>${err.message}</p>`;
+      }
+    }
+
+    loadConfirmation();
+  </script>
+</body>
+</html>
