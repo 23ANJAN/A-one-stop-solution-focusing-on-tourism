@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Indian Restaurant Reservations</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f5f5f5; }
+    .app-container { max-width: 800px; margin: auto; padding: 1rem; }
+    .restaurant-card { background: #fff; border: 1px solid #ddd; border-radius: 10px; margin-bottom: 1rem; overflow: hidden; }
+    .restaurant-card img { width: 100%; height: 200px; object-fit: cover; }
+    .restaurant-content { padding: 1rem; }
+    .book-btn { background: green; color: #fff; padding: 0.5rem 1rem; border: none; border-radius: 5px; cursor: pointer; }
+    .notification { margin: 1rem 0; padding: 0.75rem; border-radius: 5px; }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <h1>Restaurant Reservations</h1>
+    <div id="notification"></div>
+    <div id="restaurants"></div>
+  </div>
+
+  <script>
+    async function loadRestaurants() {
+      const res = await fetch("http://localhost:5000/api/restaurants");
+      const data = await res.json();
+
+      const container = document.getElementById("restaurants");
+      container.innerHTML = "";
+
+      data.forEach(r => {
+        const card = document.createElement("div");
+        card.className = "restaurant-card";
+        card.innerHTML = `
+          <img src="${r.image}" alt="${r.name}">
+          <div class="restaurant-content">
+            <h2>${r.name} (${r.price_range})</h2>
+            <p><strong>Location:</strong> ${r.location}</p>
+            <p><strong>Cuisine:</strong> ${r.cuisine}</p>
+            <p><strong>Rating:</strong> ${r.rating} ⭐ (${r.total_reviews} reviews)</p>
+            <p><strong>Description:</strong> ${r.description}</p>
+            <p><strong>Tables Available:</strong> ${r.tables_available}</p>
+            <button class="book-btn" onclick="bookTable(${r.id})">Book Table</button>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    async function bookTable(restaurant_id) {
+      const booking = {
+        restaurant_id,
+        guests: 2,
+        date: new Date().toISOString().split("T")[0],
+        time: "19:00"
+      };
+
+      const res = await fetch("http://localhost:5000/api/book", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(booking)
+      });
+
+      const result = await res.json();
+      const notification = document.getElementById("notification");
+
+      if (result.success) {
+        notification.innerHTML = `<div class="notification" style="background:#059669;color:white">${result.message}</div>`;
+        loadRestaurants();
+      } else {
+        notification.innerHTML = `<div class="notification" style="background:red;color:white">${result.message}</div>`;
+      }
+    }
+
+    loadRestaurants();
+  </script>
+</body>
+</html>
